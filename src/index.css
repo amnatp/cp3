@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* shadcn semantic tokens */
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground:var(--secondary-foreground);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-destructive:         var(--destructive);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-ring:                var(--ring);
+  --radius-sm:   calc(var(--radius) - 4px);
+  --radius-md:   calc(var(--radius) - 2px);
+  --radius-lg:   var(--radius);
+  --radius-xl:   calc(var(--radius) + 4px);
+
+  /* WICE brand colors — brandbook 2024 */
+  --color-wice-red:        #ED1C24;   /* WICE Red   — Pantone 1795 C */
+  --color-wice-red-dark:   #c5161c;
+  --color-wice-blue:       #2A388F;   /* WICE Blue  — Pantone 2370 C */
+  --color-wice-deep-blue:  #1A2067;   /* WICE Deep Blue — Pantone 281 C */
+  --color-wice-blue-light: #3d4fa3;   /* lighter tint for accents */
+}
+
+/* WICE Logistics theme — primary = WICE Red, brand = WICE Blue */
+:root {
+  --background:           oklch(1 0 0);
+  --foreground:           oklch(0.22 0.065 256);
+  --card:                 oklch(1 0 0);
+  --card-foreground:      oklch(0.22 0.065 256);
+  --popover:              oklch(1 0 0);
+  --popover-foreground:   oklch(0.22 0.065 256);
+  --primary:              oklch(0.529 0.228 27);  /* #ED1C24 WICE Red */
+  --primary-foreground:   oklch(1 0 0);
+  --secondary:            oklch(0.95 0.01 256);
+  --secondary-foreground: oklch(0.22 0.065 256);
+  --muted:                oklch(0.967 0.003 264);
+  --muted-foreground:     oklch(0.554 0.046 257);
+  --accent:               oklch(0.967 0.003 264);
+  --accent-foreground:    oklch(0.22 0.065 256);
+  --destructive:          oklch(0.577 0.245 27);
+  --border:               oklch(0.929 0.006 264);
+  --input:                oklch(0.929 0.006 264);
+  --ring:                 oklch(0.529 0.228 27);  /* #ED1C24 WICE Red */
+  --radius:               0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
