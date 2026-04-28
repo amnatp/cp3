@@ -87,6 +87,46 @@ export default function KpiEntryForm() {
     [template]
   );
 
+  // Map each category criterionId to the criterionIds of its "- Actual" sub-rows.
+  // Categories present in this map are auto-aggregated and become read-only.
+  const categoryActualChildren = useMemo(() => {
+    const map = new Map();
+    const isActualSub = (row) =>
+      row.type === "sub" && /-\s*actual\s*$/i.test(row.label ?? "");
+    for (let i = 0; i < template.length; i++) {
+      const row = template[i];
+      if (row.type !== "category") continue;
+      const children = [];
+      for (let j = i + 1; j < template.length; j++) {
+        const r = template[j];
+        if (r.type === "section" || r.type === "category") break;
+        if (isActualSub(r)) children.push(r.criterionId);
+      }
+      if (children.length > 0) map.set(row.criterionId, children);
+    }
+    return map;
+  }, [template]);
+
+  // Live-compute aggregated total/missed for a category from its children's
+  // current input values. Returns null when no children have any value yet.
+  function aggregateCategory(categoryId) {
+    const childIds = categoryActualChildren.get(categoryId);
+    if (!childIds) return null;
+    let total = null;
+    let missed = null;
+    let hasAny = false;
+    for (const cid of childIds) {
+      const v = values[cid] ?? {};
+      const t = v.total  === "" || v.total  == null ? null : Number(v.total);
+      const m = v.missed === "" || v.missed == null ? null : Number(v.missed);
+      if (t == null && m == null) continue;
+      hasAny = true;
+      total  = (total  ?? 0) + (t ?? 0);
+      missed = (missed ?? 0) + (m ?? 0);
+    }
+    return hasAny ? { total: total ?? 0, missed: missed ?? 0 } : null;
+  }
+
   function handleChange(criterionId, field, raw) {
     const num = raw === "" ? "" : Math.max(0, parseInt(raw, 10) || 0);
     setValues((prev) => ({
@@ -104,9 +144,18 @@ export default function KpiEntryForm() {
     setSuccess(false);
     setSubmitting(true);
 
+    // Auto-aggregate every category that has "- Actual" sub-rows so the saved
+    // value is consistent with what the user sees in the form.
+    const aggregated = { ...values };
+    for (const [categoryId] of categoryActualChildren) {
+      const agg = aggregateCategory(categoryId);
+      if (agg) aggregated[categoryId] = agg;
+    }
+    setValues(aggregated);
+
     const items = entryRows
       .map((row) => {
-        const v = values[row.criterionId] ?? {};
+        const v = aggregated[row.criterionId] ?? {};
         const total = v.total === "" || v.total == null ? null : Number(v.total);
         const missed = v.missed === "" || v.missed == null ? null : Number(v.missed);
         const pct = calcPct(total, missed);
@@ -236,21 +285,37 @@ export default function KpiEntryForm() {
                 }
 
                 if (row.type === "category") {
-                  const v = values[row.criterionId] ?? {};
-                  const pct = calcPct(v.total, v.missed);
+                  const stored = values[row.criterionId] ?? {};
+                  const agg = aggregateCategory(row.criterionId);
+                  const isAuto = agg !== null;
+                  const totalVal  = isAuto ? agg.total  : (stored.total  ?? "");
+                  const missedVal = isAuto ? agg.missed : (stored.missed ?? "");
+                  const pct = calcPct(totalVal, missedVal);
+                  const inputCls = isAuto
+                    ? "w-24 rounded border border-slate-200 bg-slate-100 px-2 py-1 text-center text-xs font-semibold text-slate-700 cursor-not-allowed"
+                    : "w-24 rounded border border-slate-200 px-2 py-1 text-center text-xs focus:outline-none focus:ring-2 focus:ring-wice-red/40";
                   return (
                     <tr key={idx} className="border-b border-slate-100 bg-slate-50/60">
                       <td className="px-3 py-2 text-xs text-slate-400">{row.criterionId}</td>
-                      <td className="px-3 py-2 text-xs font-semibold text-slate-800">{row.label}</td>
+                      <td className="px-3 py-2 text-xs font-semibold text-slate-800">
+                        {row.label}
+                        {isAuto && (
+                          <span className="ml-2 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
+                            Auto
+                          </span>
+                        )}
+                      </td>
                       <td className="px-3 py-2 text-center text-xs text-slate-500">{row.kpiDays ?? ""}</td>
                       <td className="px-3 py-2 text-center text-xs font-semibold text-slate-700">{row.targetKpi ?? ""}</td>
                       <td className="px-2 py-1.5 text-center">
                         <input
                           type="number"
                           min="0"
-                          value={v.total ?? ""}
-                          onChange={(e) => handleChange(row.criterionId, "total", e.target.value)}
-                          className="w-24 rounded border border-slate-200 px-2 py-1 text-center text-xs focus:outline-none focus:ring-2 focus:ring-wice-red/40"
+                          value={totalVal ?? ""}
+                          readOnly={isAuto}
+                          disabled={isAuto}
+                          onChange={(e) => !isAuto && handleChange(row.criterionId, "total", e.target.value)}
+                          className={inputCls}
                           placeholder="—"
                         />
                       </td>
@@ -258,9 +323,11 @@ export default function KpiEntryForm() {
                         <input
                           type="number"
                           min="0"
-                          value={v.missed ?? ""}
-                          onChange={(e) => handleChange(row.criterionId, "missed", e.target.value)}
-                          className="w-24 rounded border border-slate-200 px-2 py-1 text-center text-xs focus:outline-none focus:ring-2 focus:ring-wice-red/40"
+                          value={missedVal ?? ""}
+                          readOnly={isAuto}
+                          disabled={isAuto}
+                          onChange={(e) => !isAuto && handleChange(row.criterionId, "missed", e.target.value)}
+                          className={inputCls}
                           placeholder="—"
                         />
                       </td>
@@ -268,7 +335,7 @@ export default function KpiEntryForm() {
                         {pct !== null ? (
                           <span
                             className="inline-block rounded px-1.5 py-0.5 text-[11px] font-bold text-white"
-                            style={{ backgroundColor: pct >= (parseFloat(row.targetKpi) ?? 98) ? "#16a34a" : "#dc2626" }}
+                            style={{ backgroundColor: pct >= (Number.parseFloat(row.targetKpi) ?? 98) ? "#16a34a" : "#dc2626" }}
                           >
                             {pct.toFixed(0)}%
                           </span>

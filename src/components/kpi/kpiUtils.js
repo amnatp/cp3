@@ -88,5 +88,54 @@ export function buildRows(mode, entries, viewConfig) {
     }
   });
 
+  // ── Aggregate category rows from their "- Actual" sub-rows ────────────────
+  // Each category total/missed is the sum of all subsequent sub-rows whose
+  // label ends with "- Actual" (case-insensitive, ignoring trailing punctuation),
+  // up to the next section or category. % is recomputed as (total - missed) / total.
+  const isActualSub = (row) =>
+    row.type === "sub" && /-\s*actual\s*$/i.test(row.label ?? "");
+
+  for (let i = 0; i < rows.length; i++) {
+    const cat = rows[i];
+    if (cat.type !== "category") continue;
+
+    const actualSubs = [];
+    for (let j = i + 1; j < rows.length; j++) {
+      const r = rows[j];
+      if (r.type === "section" || r.type === "category") break;
+      if (isActualSub(r)) actualSubs.push(r);
+    }
+    if (actualSubs.length === 0) continue;
+
+    // Aggregate per-month and YTD
+    const aggMonthData = monthCols.map((_, mIdx) => {
+      let total = null, missed = null;
+      actualSubs.forEach((sub) => {
+        const d = sub.monthData[mIdx];
+        if (d == null) return;
+        total  = (total  ?? 0) + (d.total  ?? 0);
+        missed = (missed ?? 0) + (d.missed ?? 0);
+      });
+      if (total === null && missed === null) return null;
+      const pct = total && total > 0 ? ((total - (missed ?? 0)) / total) * 100 : null;
+      return { total: total ?? 0, missed: missed ?? 0, pct };
+    });
+
+    let ytdTotal = null, ytdMissed = null;
+    aggMonthData.forEach((d) => {
+      if (d == null) return;
+      ytdTotal  = (ytdTotal  ?? 0) + (d.total  ?? 0);
+      ytdMissed = (ytdMissed ?? 0) + (d.missed ?? 0);
+    });
+    const ytdPct = ytdTotal && ytdTotal > 0
+      ? ((ytdTotal - (ytdMissed ?? 0)) / ytdTotal) * 100
+      : null;
+
+    cat.monthData = aggMonthData;
+    cat.ytdTotal  = ytdTotal;
+    cat.ytdMissed = ytdMissed;
+    cat.ytdPct    = ytdPct;
+  }
+
   return { rows, monthCols, year };
 }
