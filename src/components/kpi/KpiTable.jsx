@@ -31,6 +31,8 @@ function PctBadge({ n, target }) {
 
 function DataCells({ d, isCategory, targetKpi }) {
   const n = effectivePct(d?.pct);
+  // Treat zero-volume rows (no shipments) as "no data" — show "—" instead of 0% / 100%.
+  const hasVolume = d != null && (d.total ?? 0) > 0;
   return (
     <>
       <td className={cx("px-2 py-1.5 text-center tabular-nums text-xs border-r border-slate-100", isCategory && "font-semibold")}>
@@ -40,7 +42,7 @@ function DataCells({ d, isCategory, targetKpi }) {
         {fmtNum(d?.missed)}
       </td>
       <td className="px-2 py-1.5 text-center border-r-2 border-slate-200">
-        {d ? <PctBadge n={n} target={targetKpi} /> : <span className="text-slate-300 text-xs">—</span>}
+        {hasVolume ? <PctBadge n={n} target={targetKpi} /> : <span className="text-slate-300 text-xs">—</span>}
       </td>
     </>
   );
@@ -48,6 +50,7 @@ function DataCells({ d, isCategory, targetKpi }) {
 
 function YtdCells({ total, missed, pct, isCategory, targetKpi }) {
   const n = effectivePct(pct);
+  const hasVolume = (total ?? 0) > 0;
   return (
     <>
       <td className={cx("px-2 py-1.5 text-center tabular-nums text-xs border-r border-slate-100 bg-amber-50/40", isCategory && "font-semibold")}>
@@ -57,7 +60,7 @@ function YtdCells({ total, missed, pct, isCategory, targetKpi }) {
         {fmtNum(missed)}
       </td>
       <td className="px-2 py-1.5 text-center bg-amber-50/40">
-        {total !== null ? <PctBadge n={n} target={targetKpi} /> : <span className="text-slate-300 text-xs">—</span>}
+        {hasVolume ? <PctBadge n={n} target={targetKpi} /> : <span className="text-slate-300 text-xs">—</span>}
       </td>
     </>
   );
