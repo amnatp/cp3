@@ -3,6 +3,18 @@ import { useMsal } from "@azure/msal-react";
 import { tokenRequest } from "@/lib/msal";
 
 /**
+ * Base URL for the BFF API. In dev this is empty so Vite's proxy handles
+ * `/api/*`. In production set `VITE_API_BASE_URL` (e.g. https://cp-bff.azurewebsites.net).
+ */
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+
+function buildUrl(url) {
+  if (/^https?:\/\//i.test(url)) return url;
+  if (!API_BASE_URL) return url;
+  return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+/**
  * Returns a fetch wrapper that silently acquires an Entra access token and
  * attaches it as a Bearer header. Any SPA or script can use the same pattern.
  */
@@ -22,7 +34,7 @@ export function useAuthFetch() {
       throw new Error("Redirecting for token renewal");
     });
 
-    return fetch(url, {
+    return fetch(buildUrl(url), {
       ...options,
       headers: {
         ...options.headers,
