@@ -70,9 +70,8 @@ export default function ReportsKpi() {
       return { year: selectedYear, monthNums: Array.from({ length: maxMonth }, (_, i) => i + 1) };
     }
     if (viewMode === "quarter") {
-      let months = QUARTERS.find((q) => q.key === selectedQuarter)?.months ?? [1, 2, 3];
-      if (selectedYear === CURRENT_YEAR) months = months.filter((m) => m <= CURRENT_MONTH);
-      return { year: selectedYear, monthNums: months.length > 0 ? months : [months[0] ?? 1] };
+      const months = QUARTERS.find((q) => q.key === selectedQuarter)?.months ?? [1, 2, 3];
+      return { year: selectedYear, monthNums: months };
     }
     return { year: selectedYear, monthNums: [selectedMonth] };
   }, [viewMode, selectedYear, selectedQuarter, selectedMonth]);
