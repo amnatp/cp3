@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthFetch } from "@/lib/useAuthFetch";
 import { TEMPLATE_ITEMS, MODE_TABS, MONTH_ABBR } from "@/components/kpi/kpiData";
@@ -24,10 +24,62 @@ export default function KpiEntryForm() {
   const [year, setYear] = useState(now.getFullYear());
   const [values, setValues] = useState({}); // { [criterionId]: { total, missed } }
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [existingEntryId, setExistingEntryId] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
   const template = useMemo(() => TEMPLATE_ITEMS[service] ?? [], [service]);
+
+  // Load existing entry for the selected service/month/year and prefill the form
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadExisting() {
+      setLoading(true);
+      setError(null);
+      setSuccess(false);
+      try {
+        const res = await authFetch("/api/kpi?pageSize=500");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const entries = await res.json();
+
+        const monthAbbr = MONTH_ABBR[month - 1];
+        const match = (Array.isArray(entries) ? entries : []).find(
+          (e) =>
+            e.service === service &&
+            String(e.month).toUpperCase() === monthAbbr &&
+            Number(e.year) === Number(year)
+        );
+
+        if (cancelled) return;
+
+        if (match) {
+          const next = {};
+          for (const item of match.items ?? []) {
+            next[item.criterionId] = {
+              total: item.total ?? "",
+              missed: item.missed ?? "",
+            };
+          }
+          setValues(next);
+          setExistingEntryId(match.id);
+        } else {
+          setValues({});
+          setExistingEntryId(null);
+        }
+      } catch (err) {
+        if (!cancelled) setError(err.message ?? "Failed to load existing entry.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadExisting();
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch, service, month, year]);
 
   // Only rows with a criterionId are data-entry rows
   const entryRows = useMemo(
@@ -73,8 +125,9 @@ export default function KpiEntryForm() {
         throw new Error(text || `HTTP ${res.status}`);
       }
 
+      const data = await res.json().catch(() => null);
+      if (data?.id != null) setExistingEntryId(data.id);
       setSuccess(true);
-      setValues({});
     } catch (err) {
       setError(err.message ?? "Failed to save.");
     } finally {
@@ -88,7 +141,13 @@ export default function KpiEntryForm() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-900">KPI Data Entry</h1>
-          <p className="mt-0.5 text-xs text-slate-400">Submit monthly KPI figures</p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {loading
+              ? "Loading existing entry…"
+              : existingEntryId
+              ? "Editing existing entry for this period"
+              : "Submit monthly KPI figures"}
+          </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => navigate("/reports-kpi")}>
           ← Back to Reports
@@ -275,14 +334,19 @@ export default function KpiEntryForm() {
             KPI entry saved successfully.
           </div>
         )}
+        {loading && (
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-600">
+            Loading existing entry…
+          </div>
+        )}
 
         {/* Actions */}
         <div className="mt-4 flex gap-3 justify-end">
           <Button type="button" variant="outline" onClick={() => navigate("/reports-kpi")}>
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Saving…" : "Save Entry"}
+          <Button type="submit" disabled={submitting || loading}>
+            {submitting ? "Saving…" : existingEntryId ? "Update Entry" : "Save Entry"}
           </Button>
         </div>
       </form>

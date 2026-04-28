@@ -5,7 +5,7 @@ import { useAuthFetch } from "@/lib/useAuthFetch";
 import { apiErrorMessage } from "@/lib/utils";
 import { buildRows, parsePct, toMonthLabel } from "../components/kpi/kpiUtils";
 import KpiModeTabs from "../components/kpi/KpiModeTabs";
-import KpiCharts from "../components/kpi/KpiCharts";
+// import KpiCharts from "../components/kpi/KpiCharts"; // TODO: re-enable once chart presentation is finalized
 import KpiTable from "../components/kpi/KpiTable";
 
 const _now = new Date();
@@ -207,7 +207,9 @@ export default function ReportsKpi() {
         </div>
       </div>
 
+      {/* TODO: re-enable once chart presentation is finalized
       <KpiCharts trendData={trendData} categoryYtdData={categoryYtdData} periodLabel={periodLabel} />
+      */}
 
       <KpiTable
         rows={rows}
