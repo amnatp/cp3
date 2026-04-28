@@ -126,6 +126,16 @@ export default function ValueSpending() {
       byGroup[grp].rev[r.month] = (byGroup[grp].rev[r.month] ?? 0) + Number(r.amount);
       byGroup[grp].out[r.month] = (byGroup[grp].out[r.month] ?? 0) + Number(r.outlay);
     });
+    // Merge demurrage/detention monthly amounts (delivered as separate arrays from API)
+    const mergeMonthly = (grp, list) => {
+      if (!list?.length) return;
+      if (!byGroup[grp]) byGroup[grp] = { rev: {}, out: {} };
+      list.forEach((d) => {
+        byGroup[grp].rev[d.month] = (byGroup[grp].rev[d.month] ?? 0) + Number(d.amount);
+      });
+    };
+    mergeMonthly("Demurrage Charge", demurrageMonthly);
+    mergeMonthly("Detention Charge", detentionMonthly);
     return Object.entries(byGroup)
       .map(([grp, { rev, out }]) => {
         const row = { CATEGORIES: grp };
@@ -141,7 +151,7 @@ export default function ValueSpending() {
         return row;
       })
       .sort((a, b) => chargeGroupRank(a.CATEGORIES) - chargeGroupRank(b.CATEGORIES) || b.AMOUNT - a.AMOUNT);
-  }, [apiRows]);
+  }, [apiRows, demurrageMonthly, detentionMonthly]);
 
   const selectedMonthLabel = useMemo(
     () => MONTH_KEYS.find((m) => m.key === monthKey)?.label ?? monthKey,
