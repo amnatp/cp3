@@ -16,6 +16,7 @@ export default function ValueSpending() {
   const [apiRows, setApiRows] = useState([]);
   const [demurrageMonthly, setDemurrageMonthly] = useState([]);
   const [detentionMonthly, setDetentionMonthly] = useState([]);
+  const [storageMonthly, setStorageMonthly] = useState([]);
   const [laborTransportMonthly, setLaborTransportMonthly] = useState([]);
   const [laborCustomsMonthly, setLaborCustomsMonthly] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export default function ValueSpending() {
           setApiRows(data.rows ?? []);
           setDemurrageMonthly(data.demurrage ?? []);
           setDetentionMonthly(data.detention ?? []);
+          setStorageMonthly(data.storage ?? []);
           setLaborTransportMonthly(data.laborTransport ?? []);
           setLaborCustomsMonthly(data.laborCustoms ?? []);
           setLoading(false);
@@ -119,23 +121,27 @@ export default function ValueSpending() {
 
   // Charge-group view: flatten all sample charge groups across categories
   const chargeGroupRows = useMemo(() => {
+    // Demurrage/Detention/Storage are sourced exclusively from their dedicated
+    // monthly arrays (see repo) to avoid double-counting with apiRows.
+    const SEPARATELY_SOURCED = new Set(["Demurrage Charge", "Detention Charge", "Storage Charge"]);
     const byGroup = {};
     apiRows.forEach((r) => {
       const grp = r.chargeGroup || "(Unspecified)";
+      if (SEPARATELY_SOURCED.has(grp)) return;
       if (!byGroup[grp]) byGroup[grp] = { rev: {}, out: {} };
       byGroup[grp].rev[r.month] = (byGroup[grp].rev[r.month] ?? 0) + Number(r.amount);
       byGroup[grp].out[r.month] = (byGroup[grp].out[r.month] ?? 0) + Number(r.outlay);
     });
-    // Merge demurrage/detention monthly amounts (delivered as separate arrays from API)
-    const mergeMonthly = (grp, list) => {
+    const setMonthly = (grp, list) => {
       if (!list?.length) return;
-      if (!byGroup[grp]) byGroup[grp] = { rev: {}, out: {} };
+      byGroup[grp] = { rev: {}, out: {} };
       list.forEach((d) => {
-        byGroup[grp].rev[d.month] = (byGroup[grp].rev[d.month] ?? 0) + Number(d.amount);
+        byGroup[grp].rev[d.month] = Number(d.amount);
       });
     };
-    mergeMonthly("Demurrage Charge", demurrageMonthly);
-    mergeMonthly("Detention Charge", detentionMonthly);
+    setMonthly("Demurrage Charge", demurrageMonthly);
+    setMonthly("Detention Charge", detentionMonthly);
+    setMonthly("Storage Charge",   storageMonthly);
     return Object.entries(byGroup)
       .map(([grp, { rev, out }]) => {
         const row = { CATEGORIES: grp };
@@ -151,7 +157,7 @@ export default function ValueSpending() {
         return row;
       })
       .sort((a, b) => chargeGroupRank(a.CATEGORIES) - chargeGroupRank(b.CATEGORIES) || b.AMOUNT - a.AMOUNT);
-  }, [apiRows, demurrageMonthly, detentionMonthly]);
+  }, [apiRows, demurrageMonthly, detentionMonthly, storageMonthly]);
 
   const selectedMonthLabel = useMemo(
     () => MONTH_KEYS.find((m) => m.key === monthKey)?.label ?? monthKey,
