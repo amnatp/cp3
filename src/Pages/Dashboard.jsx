@@ -87,7 +87,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   // ── Shipment Insight state ─────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState("air");
+  const [activeTab, setActiveTab] = useState("sea");
   const [allShipments, setAllShipments] = useState([]);
   const [insightLoading, setInsightLoading] = useState(true);
   const [insightError, setInsightError] = useState(null);
@@ -366,8 +366,8 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {[
-              { key: "air",         label: "Air",         color: "#0b78bd" },
               { key: "sea",         label: "Sea",         color: "#c35b2e" },
+              { key: "air",         label: "Air",         color: "#0b78bd" },
               { key: "crossborder", label: "Crossborder", color: "#16a34a" },
               { key: "transport",   label: "Transport",   color: "#8b5cf6" },
               { key: "customs",     label: "Customs",     color: "#14b8a6" },
