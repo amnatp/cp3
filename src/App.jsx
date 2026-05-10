@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthenticatedTemplate, UnauthenticatedTemplate } from "@azure/msal-react";
+import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from "@azure/msal-react";
 import Layout from "./components/Layout.jsx";
 import Dashboard from "./Pages/Dashboard.jsx";
 import Shipments from "./Pages/Shipments.jsx";
@@ -9,6 +9,7 @@ import KpiEntryForm from "./Pages/KpiEntryForm.jsx";
 import ValueSpending from "./Pages/ValueSpending.jsx";
 import Login from "./Pages/Login.jsx";
 import { useIsWiceStaff } from "./lib/useIsWiceStaff.js";
+import CookieConsent from "./components/CookieConsent.jsx";
 
 function WiceStaffRoute({ element }) {
   const isWiceStaff = useIsWiceStaff();
@@ -16,8 +17,18 @@ function WiceStaffRoute({ element }) {
 }
 
 export default function App() {
+  const { accounts } = useMsal();
+
+  useEffect(() => {
+    const userId = accounts[0]?.localAccountId;
+    if (userId && typeof window.gtag === "function") {
+      window.gtag("config", "G-0V3RRFYJLB", { user_id: userId });
+    }
+  }, [accounts]);
+
   return (
     <>
+      <CookieConsent />
       <UnauthenticatedTemplate>
         <Login />
       </UnauthenticatedTemplate>
