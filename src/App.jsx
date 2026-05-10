@@ -22,7 +22,7 @@ export default function App() {
   useEffect(() => {
     const userId = accounts[0]?.localAccountId;
     if (userId && typeof window.gtag === "function") {
-      window.gtag("config", "G-0V3RRFYJLB", { user_id: userId });
+      window.gtag("config", "G-E6K7KN9DQZ", { user_id: userId });
     }
   }, [accounts]);
 
