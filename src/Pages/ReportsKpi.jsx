@@ -7,6 +7,7 @@ import { buildRows, parsePct, toMonthLabel } from "../components/kpi/kpiUtils";
 import KpiModeTabs from "../components/kpi/KpiModeTabs";
 // import KpiCharts from "../components/kpi/KpiCharts"; // TODO: re-enable once chart presentation is finalized
 import KpiTable from "../components/kpi/KpiTable";
+import { useIsWiceStaff } from "@/lib/useIsWiceStaff";
 
 const _now = new Date();
 const CURRENT_YEAR  = _now.getFullYear();
@@ -28,6 +29,7 @@ const MONTHS_LIST = [
 export default function ReportsKpi() {
   const authFetch = useAuthFetch();
   const navigate = useNavigate();
+  const isWiceStaff = useIsWiceStaff();
   const [mode, setMode] = useState("SEA_AIR");
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -197,12 +199,14 @@ export default function ReportsKpi() {
                 ))}
             </select>
           )}
-          <button
-            onClick={() => navigate("/reports-kpi/entry")}
-            className="rounded-lg px-3 py-1.5 text-sm font-semibold bg-wice-red text-white shadow-sm hover:bg-wice-red-dark transition-colors"
-          >
-            + New Entry
-          </button>
+          {isWiceStaff && (
+            <button
+              onClick={() => navigate("/reports-kpi/entry")}
+              className="rounded-lg px-3 py-1.5 text-sm font-semibold bg-wice-red text-white shadow-sm hover:bg-wice-red-dark transition-colors"
+            >
+              + New Entry
+            </button>
+          )}
         </div>
       </div>
 

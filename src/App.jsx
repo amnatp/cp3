@@ -40,7 +40,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/shipments" element={<Shipments />} />
             <Route path="/reports-kpi" element={<ReportsKpi />} />
-            <Route path="/reports-kpi/entry" element={<KpiEntryForm />} />
+            <Route path="/reports-kpi/entry" element={<WiceStaffRoute element={<KpiEntryForm />} />} />
             <Route path="/spending" element={<ValueSpending />} />
             <Route path="/kpi-entry" element={<WiceStaffRoute element={<KpiEntryForm />} />} />
             <Route path="*" element={<div className="text-sm text-slate-600">Not found</div>} />
