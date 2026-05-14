@@ -58,7 +58,20 @@ function directionTotals(rows) {
   return { total: rows.length, importCount: imp, exportCount: exp };
 }
 
-export default function ShipmentKpiCards({ tab, rows }) {
+function crossBorderStatusTotals(rows, cbStages) {
+  let booked = 0, inTransit = 0, delivered = 0;
+  for (const s of rows) {
+    const liveStage = s.service === "CROSS_BORDER" && s.awbBlNo ? cbStages[s.awbBlNo] : null;
+    const raw = liveStage === "POD" ? "Delivered" : (liveStage ?? s.status ?? "");
+    const st = raw.toLowerCase();
+    if (st === "confirm order") booked += 1;
+    else if (st === "in transit") inTransit += 1;
+    else if (st === "delivered" || st === "pod") delivered += 1;
+  }
+  return { booked, inTransit, delivered };
+}
+
+export default function ShipmentKpiCards({ tab, rows, cbStages = {} }) {
   const data = rows || [];
 
   const cards = useMemo(() => {
@@ -83,7 +96,15 @@ export default function ShipmentKpiCards({ tab, rows }) {
         { label: "Delivery",   value: t.delivery,  tone: "success" },
       ];
     }
-    if (tab === "CROSS_BORDER" || tab === "INLAND" || tab === "CUSTOMS") {
+    if (tab === "CROSS_BORDER") {
+      const t = crossBorderStatusTotals(data, cbStages);
+      return [
+        { label: "Booked",     value: t.booked,    tone: "muted" },
+        { label: "In Transit", value: t.inTransit, tone: "warning" },
+        { label: "Delivered",  value: t.delivered, tone: "success" },
+      ];
+    }
+    if (tab === "INLAND" || tab === "CUSTOMS") {
       const t = directionTotals(data);
       return [
         { label: "Total Shipments", value: t.total,       tone: "primary" },

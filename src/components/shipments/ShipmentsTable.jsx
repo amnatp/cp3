@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -12,7 +12,6 @@ import { formatDate, serviceIcon } from "./shipmentsData";
 import AirShipmentTimeline from "./AirShipmentTimeline";
 import SeaShipmentTracking from "./SeaShipmentTracking";
 import CrossBorderTracking from "./CrossBorderTracking";
-import { useAuthFetch } from "@/lib/useAuthFetch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -222,38 +221,14 @@ const columns = [
   },
 ];
 
-export default function ShipmentsTable({ rows }) {
-  const authFetch = useAuthFetch();
+export default function ShipmentsTable({ rows, cbStages = {}, onStageChange }) {
   const [sorting, setSorting] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columnSizing, setColumnSizing] = useState({});
-  const [cbStages, setCbStages] = useState({}); // bookingCode → ETL stage
 
   const handleStageChange = useCallback((bookingCode, stage) => {
-    setCbStages((prev) => prev[bookingCode] === stage ? prev : { ...prev, [bookingCode]: stage });
-  }, []);
-
-  // Prefetch ETL stage for all cross-border rows so the status badge is correct without expanding
-  useEffect(() => {
-    const crossBorderRows = (rows ?? []).filter(
-      (r) => r.service === "CROSS_BORDER" && r.awbBlNo
-    );
-    if (crossBorderRows.length === 0) return;
-    let cancelled = false;
-
-    crossBorderRows.forEach((r) => {
-      const params = new URLSearchParams({ bookingCode: r.awbBlNo });
-      authFetch(`/api/shipments/cross-track?${params}`)
-        .then((res) => res.ok ? res.json() : null)
-        .then((d) => {
-          if (!cancelled && d?.stage)
-            setCbStages((prev) => ({ ...prev, [r.awbBlNo]: d.stage }));
-        })
-        .catch(() => {});
-    });
-
-    return () => { cancelled = true; };
-  }, [rows, authFetch]);
+    onStageChange?.(bookingCode, stage);
+  }, [onStageChange]);
 
   const table = useReactTable({
     data: rows,

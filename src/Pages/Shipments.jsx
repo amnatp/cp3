@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { matchesQuery } from "../components/shipments/shipmentsData";
 import ShipmentsTabs from "../components/shipments/ShipmentsTabs";
 import ShipmentsToolbar from "../components/shipments/ShipmentsToolbar";
@@ -28,6 +28,11 @@ export default function Shipments() {
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cbStages, setCbStages] = useState({});
+
+  const handleStageChange = useCallback((bookingCode, stage) => {
+    setCbStages((prev) => prev[bookingCode] === stage ? prev : { ...prev, [bookingCode]: stage });
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -52,6 +57,26 @@ export default function Shipments() {
       .finally(() => setLoading(false));
     return () => controller.abort();
   }, [authFetch, period, direction, tab]);
+
+  // Prefetch live ETL stage for all cross-border shipments so KPI counts are accurate
+  useEffect(() => {
+    const crossBorderRows = shipments.filter(
+      (r) => r.service === "CROSS_BORDER" && r.awbBlNo
+    );
+    if (crossBorderRows.length === 0) return;
+    let cancelled = false;
+    crossBorderRows.forEach((r) => {
+      const params = new URLSearchParams({ bookingCode: r.awbBlNo });
+      authFetch(`/api/shipments/cross-track?${params}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((d) => {
+          if (!cancelled && d?.stage)
+            setCbStages((prev) => ({ ...prev, [r.awbBlNo]: d.stage }));
+        })
+        .catch(() => {});
+    });
+    return () => { cancelled = true; };
+  }, [shipments, authFetch]);
 
   const filtered = useMemo(() => {
     return shipments
@@ -97,7 +122,7 @@ export default function Shipments() {
 
       {!loading && tab !== "ALL" && (
         <div className="mt-4">
-          <ShipmentKpiCards tab={tab} rows={filtered} />
+          <ShipmentKpiCards tab={tab} rows={filtered} cbStages={cbStages} />
         </div>
       )}
 
@@ -126,7 +151,7 @@ export default function Shipments() {
         </div>
       ) : (
         <>
-          <ShipmentsTable rows={filtered} />
+          <ShipmentsTable rows={filtered} cbStages={cbStages} onStageChange={handleStageChange} />
           <ShipmentsCards rows={filtered} />
         </>
       )}
