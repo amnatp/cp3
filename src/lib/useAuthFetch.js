@@ -34,13 +34,19 @@ export function useAuthFetch() {
       throw new Error("Redirecting for token renewal");
     });
 
+    const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+    const headers = {
+      ...options.headers,
+      Authorization: `Bearer ${accessToken}`,
+    };
+
+    if (!isFormData && !("Content-Type" in headers) && !("content-type" in headers)) {
+      headers["Content-Type"] = "application/json";
+    }
+
     return fetch(buildUrl(url), {
       ...options,
-      headers: {
-        ...options.headers,
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
+      headers,
     });
   }, [instance, accounts]);
 }

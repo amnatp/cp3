@@ -1,5 +1,6 @@
 import React from "react";
 import { formatDate, statusBadge, serviceIcon } from "./shipmentsData";
+import ShipmentDocumentsPanel from "./ShipmentDocumentsPanel";
 
 export default function ShipmentsCards({ rows }) {
   return (
@@ -46,12 +47,7 @@ export default function ShipmentsCards({ rows }) {
             </div>
           </div>
 
-          <button
-            onClick={() => alert(`Open shipment detail: ${s.id}`)}
-            className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50"
-          >
-            View details
-          </button>
+          <ShipmentDocumentsPanel shipmentId={s.id} compact />
         </div>
       ))}
 

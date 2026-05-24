@@ -9,11 +9,11 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { formatDate, serviceIcon } from "./shipmentsData";
+import ShipmentDocumentsPanel from "./ShipmentDocumentsPanel";
 import AirShipmentTimeline from "./AirShipmentTimeline";
 import SeaShipmentTracking from "./SeaShipmentTracking";
 import CrossBorderTracking from "./CrossBorderTracking";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableHeader,
@@ -83,6 +83,8 @@ function ExpandedDetail({ row, onStageChange }) {
           </div>
         </div>
       )}
+
+      <ShipmentDocumentsPanel shipmentId={s.id} />
 
       {s.service === "AIR" && (
         <div className="mt-4 pt-4 border-t border-border/50">
