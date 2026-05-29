@@ -14,6 +14,7 @@ import AirShipmentTimeline from "./AirShipmentTimeline";
 import SeaShipmentTracking from "./SeaShipmentTracking";
 import CrossBorderTracking from "./CrossBorderTracking";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableHeader,

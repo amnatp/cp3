@@ -29,8 +29,8 @@ export default function KpiCharts({ trendData, categoryYtdData, periodLabel }) {
           Monthly average KPI %
         </div>
         <div className="p-4">
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="99%" height={256}>
+          <div className="h-64 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
               <LineChart data={trendData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
@@ -64,8 +64,8 @@ export default function KpiCharts({ trendData, categoryYtdData, periodLabel }) {
           Category {periodLabel ?? "YTD"} performance
         </div>
         <div className="p-4">
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="99%" height={256}>
+          <div className="h-64 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
               <BarChart
                 data={categoryYtdData}
                 layout="vertical"

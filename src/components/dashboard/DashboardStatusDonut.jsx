@@ -20,8 +20,8 @@ export default function DashboardStatusDonut({ donutData }) {
 
   return (
       <Panel title="Shipments by stage">  
-      <div className="relative h-56 w-full">
-        <ResponsiveContainer width="99%" height={224}>
+      <div className="relative h-56 w-full min-w-0">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
           <PieChart>
             <Pie
               data={donutData}

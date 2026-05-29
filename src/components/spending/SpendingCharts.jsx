@@ -61,8 +61,8 @@ export default function SpendingCharts({
         {/* Monthly trend */}
         <div className="lg:col-span-6">
           <Panel title="Monthly total trend">
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="99%" height={288}>
+            <div className="h-72 w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
                 <LineChart data={monthlyTotalsTrend}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" tick={{ fontSize: 12 }} />
@@ -80,8 +80,8 @@ export default function SpendingCharts({
         {/* Category bar */}
         <div className="lg:col-span-6">
           <Panel title={`Spending by ${groupLabel} (${barLabel})`} right={periodToggle}>
-            <div className="h-72 w-full">
-              <ResponsiveContainer width="99%" height={288}>
+            <div className="h-72 w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
                 <BarChart data={byCategoryForMonth} layout="vertical" margin={{ left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" tickFormatter={compact} tick={{ fontSize: 11 }} />
@@ -100,8 +100,8 @@ export default function SpendingCharts({
       {/* Stacked bar — monthly spending by category */}
       <div className="mt-4">
         <Panel title={`Monthly spending by ${groupLabel}`}>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="99%" height={288}>
+          <div className="h-72 w-full min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
               <BarChart data={monthlyCategoryData} margin={{ left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />

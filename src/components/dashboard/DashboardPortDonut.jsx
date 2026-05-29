@@ -30,8 +30,8 @@ export default function DashboardPortDonut({ title, data }) {
 
   return (
     <Panel title={title}>
-      <div className="h-44 w-full">
-        <ResponsiveContainer width="99%" height={176}>
+      <div className="h-44 w-full min-w-0">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={1}>
           <PieChart>
             <Pie
               data={data}
