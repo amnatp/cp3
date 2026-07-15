@@ -12,6 +12,7 @@ import SeaDashboardTab from "../components/dashboard/SeaDashboardTab";
 import CrossborderDashboardTab from "../components/dashboard/CrossborderDashboardTab";
 import TransportDashboardTab from "../components/dashboard/TransportDashboardTab";
 import CustomsDashboardTab from "../components/dashboard/CustomsDashboardTab";
+import DashboardCo2EmissionChart from "../components/dashboard/DashboardCo2EmissionChart";
 
 const PERIODS = [
   { key: "wtd", label: "WTD" },
@@ -88,34 +89,26 @@ export default function Dashboard() {
 
   // ── Shipment Insight state ─────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("sea");
-  const [allShipments, setAllShipments] = useState([]);
-  const [insightLoading, setInsightLoading] = useState(true);
-  const [insightError, setInsightError] = useState(null);
 
-  const loadInsightShipments = useCallback(async () => {
+  const loadDashboard = useCallback(async () => {
     try {
-      setInsightLoading(true);
-      setInsightError(null);
-      const params = new URLSearchParams({
-        pageSize: "5000",
-        period,
-        direction,
-      });
-      const res = await authFetch(`/api/shipments?${params}`);
+      setLoading(true);
+      setError(null);
+      const res = await authFetch(`/api/dashboard?period=${period}&direction=${direction}`);
       if (!res.ok) throw Object.assign(new Error("fetch"), { status: res.status });
       const json = await res.json();
-      setAllShipments(Array.isArray(json) ? json : (json?.items ?? []));
+      setData(json);
     } catch (e) {
-      setInsightError(apiErrorMessage(e));
+      setError(apiErrorMessage(e));
     } finally {
-      setInsightLoading(false);
+      setLoading(false);
     }
   }, [authFetch, period, direction]);
 
-  useEffect(() => { loadInsightShipments(); }, [loadInsightShipments]);
+  useEffect(() => { loadDashboard(); }, [loadDashboard]);
 
   // ── Insight: derive per-service data from the same server-side criteria ──
-  const insightShipments = allShipments;
+  const insightShipments = data?.insightShipments ?? [];
 
   // Air
   const airShipments = useMemo(() =>
@@ -274,21 +267,8 @@ export default function Dashboard() {
     { title: "Export Shipments by Destination", data: topNWithOther(sumByKey(customsExport, (s) => s.destination, () => 1)), valueDp: 0 },
   ], [customsImport, customsExport]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    authFetch(`/api/dashboard?period=${period}&direction=${direction}`)
-      .then((r) => {
-        if (!r.ok) throw Object.assign(new Error("fetch"), { status: r.status });
-        return r.json();
-      })
-      .then((d) => { if (!cancelled) { setData(d); setLoading(false); } })
-      .catch((e) => { if (!cancelled) { setError(apiErrorMessage(e)); setLoading(false); } });
-    return () => { cancelled = true; };
-  }, [authFetch, period, direction]);
-
   const kpis = data?.kpis ?? { booked: 0, arriving: 0, clearanceDays: null, inTransit: 0, total: 0, delivered: 0, air: 0, sea: 0, customs: 0, inland: 0, crossBorder: 0 };
+  const co2Monthly = data?.co2Monthly ?? [];
   const exceptions = data?.exceptions ?? [];
 
   const periodLabel = PERIODS.find((p) => p.key === period)?.label ?? "";
@@ -356,6 +336,8 @@ export default function Dashboard() {
 
       <DashboardKpiCards kpis={kpis} periodLabel={periodLabel} />
 
+      <DashboardCo2EmissionChart data={co2Monthly} />
+
       {/* ── Shipment Insight ─────────────────────────────────────────────── */}
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 h-1.5 w-full rounded-full bg-gradient-to-r from-[#0b78bd] via-[#c35b2e] to-[#69a82f]" />
@@ -393,9 +375,9 @@ export default function Dashboard() {
       <div className="mt-2 space-y-4">
         {activeTab === "air" && (
           <AirDashboardTab
-            loading={insightLoading}
-            error={insightError}
-            onRetry={loadInsightShipments}
+            loading={loading}
+            error={error}
+            onRetry={loadDashboard}
             totals={airTotals}
             monthly={airMonthly}
             donutCards={airDonutCards}
@@ -403,9 +385,9 @@ export default function Dashboard() {
         )}
         {activeTab === "sea" && (
           <SeaDashboardTab
-            loading={insightLoading}
-            error={insightError}
-            onRetry={loadInsightShipments}
+            loading={loading}
+            error={error}
+            onRetry={loadDashboard}
             totals={seaTotals}
             monthly={seaMonthly}
             donutCards={seaDonutCards}
@@ -413,9 +395,9 @@ export default function Dashboard() {
         )}
         {activeTab === "crossborder" && (
           <CrossborderDashboardTab
-            loading={insightLoading}
-            error={insightError}
-            onRetry={loadInsightShipments}
+            loading={loading}
+            error={error}
+            onRetry={loadDashboard}
             totals={crossTotals}
             monthly={crossMonthly}
             donutCards={crossDonutCards}
@@ -423,9 +405,9 @@ export default function Dashboard() {
         )}
         {activeTab === "transport" && (
           <TransportDashboardTab
-            loading={insightLoading}
-            error={insightError}
-            onRetry={loadInsightShipments}
+            loading={loading}
+            error={error}
+            onRetry={loadDashboard}
             totals={transportTotals}
             monthly={transportMonthly}
             donutCards={transportDonutCards}
@@ -433,9 +415,9 @@ export default function Dashboard() {
         )}
         {activeTab === "customs" && (
           <CustomsDashboardTab
-            loading={insightLoading}
-            error={insightError}
-            onRetry={loadInsightShipments}
+            loading={loading}
+            error={error}
+            onRetry={loadDashboard}
             totals={customsTotals}
             monthly={customsMonthly}
             donutCards={customsDonutCards}
