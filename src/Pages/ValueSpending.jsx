@@ -107,6 +107,7 @@ export default function ValueSpending() {
     "Customs Brokerage Export",
     "Cross Border Transportation Export",
     "Cross Border Transportation Import",
+    "Freight Charge",
     "Inland Transportation Export+Import",
     "Demurrage Charge",
     "Detention Charge",

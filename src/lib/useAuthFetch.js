@@ -20,9 +20,23 @@ function buildUrl(url) {
  */
 export function useAuthFetch() {
   const { instance, accounts } = useMsal();
+  const activeAccountId =
+    accounts[0]?.homeAccountId ??
+    accounts[0]?.localAccountId ??
+    accounts[0]?.username ??
+    "";
 
   return useCallback(async (url, options = {}) => {
-    const account = accounts[0];
+    const allAccounts = instance.getAllAccounts();
+    const account = activeAccountId
+      ? allAccounts.find(
+          (a) =>
+            a.homeAccountId === activeAccountId ||
+            a.localAccountId === activeAccountId ||
+            a.username === activeAccountId,
+        ) ?? allAccounts[0]
+      : allAccounts[0];
+
     if (!account) throw new Error("Not authenticated");
 
     const { accessToken } = await instance.acquireTokenSilent({
@@ -48,5 +62,5 @@ export function useAuthFetch() {
       ...options,
       headers,
     });
-  }, [instance, accounts]);
+  }, [instance, activeAccountId]);
 }

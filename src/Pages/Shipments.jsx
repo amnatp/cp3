@@ -29,12 +29,31 @@ export default function Shipments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cbStages, setCbStages] = useState({});
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
+    const onChange = (event) => setIsMobileViewport(event.matches);
+
+    setIsMobileViewport(mediaQuery.matches);
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", onChange);
+      return () => mediaQuery.removeEventListener("change", onChange);
+    }
+
+    mediaQuery.addListener(onChange);
+    return () => mediaQuery.removeListener(onChange);
+  }, []);
 
   const handleStageChange = useCallback((bookingCode, stage) => {
     setCbStages((prev) => prev[bookingCode] === stage ? prev : { ...prev, [bookingCode]: stage });
   }, []);
 
   useEffect(() => {
+    let active = true;
     const controller = new AbortController();
     const params = new URLSearchParams({
       pageSize: "5000",
@@ -50,12 +69,21 @@ export default function Shipments() {
         if (!res.ok) throw Object.assign(new Error("fetch"), { status: res.status });
         return res.json();
       })
-      .then((data) => setShipments(data))
+      .then((data) => {
+        if (!active) return;
+        setShipments(data);
+      })
       .catch((err) => {
+        if (!active) return;
         if (err.name !== "AbortError") setError(apiErrorMessage(err));
       })
-      .finally(() => setLoading(false));
-    return () => controller.abort();
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [authFetch, period, direction, tab]);
 
   // Prefetch live ETL stage for all cross-border shipments so KPI counts are accurate
@@ -151,8 +179,8 @@ export default function Shipments() {
         </div>
       ) : (
         <>
-          <ShipmentsTable rows={filtered} cbStages={cbStages} onStageChange={handleStageChange} />
-          <ShipmentsCards rows={filtered} />
+          <ShipmentsTable rows={filtered} loading={loading} cbStages={cbStages} onStageChange={handleStageChange} />
+          {isMobileViewport && <ShipmentsCards rows={filtered} />}
         </>
       )}
     </div>

@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { formatDate, statusBadge, serviceIcon } from "./shipmentsData";
 import ShipmentDocumentsPanel from "./ShipmentDocumentsPanel";
+import { Button } from "@/components/ui/button";
 
 export default function ShipmentsCards({ rows }) {
+  const [openShipmentId, setOpenShipmentId] = useState("");
+
   return (
     <div className="lg:hidden mt-4 space-y-3">
       {rows.map((s) => (
@@ -47,7 +50,17 @@ export default function ShipmentsCards({ rows }) {
             </div>
           </div>
 
-          <ShipmentDocumentsPanel shipmentId={s.id} compact />
+          <div className="mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setOpenShipmentId((prev) => (prev === s.id ? "" : s.id))}
+            >
+              {openShipmentId === s.id ? "Hide Documents" : "Show Documents"}
+            </Button>
+          </div>
+
+          {openShipmentId === s.id && <ShipmentDocumentsPanel shipmentId={s.id} compact />}
         </div>
       ))}
 

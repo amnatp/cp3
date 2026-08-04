@@ -15,6 +15,7 @@ import SeaShipmentTracking from "./SeaShipmentTracking";
 import CrossBorderTracking from "./CrossBorderTracking";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineLoader } from "@/components/ui/spinner";
 import {
   Table,
   TableHeader,
@@ -224,7 +225,7 @@ const columns = [
   },
 ];
 
-export default function ShipmentsTable({ rows, cbStages = {}, onStageChange }) {
+export default function ShipmentsTable({ rows, loading = false, cbStages = {}, onStageChange }) {
   const [sorting, setSorting] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [columnSizing, setColumnSizing] = useState({});
@@ -332,7 +333,7 @@ export default function ShipmentsTable({ rows, cbStages = {}, onStageChange }) {
           {table.getRowModel().rows.length === 0 && (
             <TableRow>
               <TableCell colSpan={colCount} className="py-8 text-center text-muted-foreground">
-                No shipments match your filters.
+                {loading ? <InlineLoader message="Loading shipments..." /> : "No shipments match your filters."}
               </TableCell>
             </TableRow>
           )}
