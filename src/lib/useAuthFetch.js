@@ -4,9 +4,20 @@ import { tokenRequest } from "@/lib/msal";
 
 /**
  * Base URL for the BFF API. In dev this is empty so Vite's proxy handles
- * `/api/*`. In production set `VITE_API_BASE_URL` (e.g. https://cp-bff.azurewebsites.net).
+ * `/api/*`. In production set `VITE_API_BASE_URL`.
+ *
+ * If the variable is missing, keep relative URLs by default, except on
+ * production hosts under wicelogistics.com where the API must go to the
+ * public API host.
  */
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+function getFallbackApiBaseUrl() {
+  if (!import.meta.env.PROD || typeof window === "undefined") return "";
+  return window.location.hostname.toLowerCase().endsWith(".wicelogistics.com")
+    ? "https://cp-bff.azurewebsites.net"
+    : "";
+}
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || getFallbackApiBaseUrl()).replace(/\/$/, "");
 
 function buildUrl(url) {
   if (/^https?:\/\//i.test(url)) return url;
